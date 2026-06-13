@@ -21,7 +21,7 @@
 ### 📊 GitHub Stats
 
 <p align="center">
-  <img height="165" src="https://github-readme-stats.vercel.app/api?username=aleexzxzxzx&show_icons=true&count_private=true&hide_border=true&theme=transparent" alt="Estadísticas de GitHub de Alejandro"/>
+  <img height="165" src="https://github-readme-stats.vercel.app/api?username=aleexzxzxzx&show_icons=true&count_private=true&hide_border=true&theme=transparent&v=2" alt="Estadísticas de GitHub de Alejandro"/>
   <img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=aleexzxzxzx&layout=compact&hide_border=true&theme=transparent" alt="Lenguajes más usados"/>
 </p>
 
