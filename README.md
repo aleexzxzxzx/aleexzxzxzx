@@ -1,33 +1,19 @@
-<h1 align="center">aleexzxzxzx</h1>
-
-<p align="center">
-
-</p>
-
----
-
-### 🛠️ Tecnologías
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"/>
-  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
-</p>
-
----
-
-### 📊 GitHub Stats
-
-<p align="center">
-  <img height="165" src="https://github-readme-stats.vercel.app/api?username=aleexzxzxzx&show_icons=true&count_private=true&hide_border=true&theme=transparent&v=2" alt="Estadísticas de GitHub de Alejandro"/>
-  <img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=aleexzxzxzx&layout=compact&hide_border=true&theme=transparent" alt="Lenguajes más usados"/>
-</p>
-
----
-
-### 📫 Contacto
-
-<p align="center">
-  <a href="mailto:alex@aleexrgzz.dev"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"/></a>
-  <a href="https://aleexrgzz.dev"><img src="https://img.shields.io/badge/Website-000000?style=for-the-badge&logo=aboutdotme&logoColor=white" alt="Website"/></a>
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://readme.aleexrgzz.dev?section=top&theme=dark">
+  <img src="https://readme.aleexrgzz.dev?section=top&theme=light" width="100%" height="20" align="left">
+</picture>
+<a href="https://aleexrgzz.dev">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://readme.aleexrgzz.dev?section=link-website&theme=dark&i=0">
+    <img src="https://readme.aleexrgzz.dev?section=link-website&theme=light&i=0" alt="visit my website" width="100" height="18px" align="left">
+  </picture>
+</a>
+<img src="data:null;," width="100%" height="0" align="left" alt="">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://readme.aleexrgzz.dev?section=fallback&theme=dark">
+  <img src="https://readme.aleexrgzz.dev?section=fallback&theme=light" alt="" width="420" align="left">
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://readme.aleexrgzz.dev?section=main&theme=dark">
+  <img src="https://readme.aleexrgzz.dev?section=main&theme=light" alt="I'm Alejandro. A developer building things for the web, one commit at a time." width="100%" height="290" align="left">
+</picture>

@@ -1,0 +1,13 @@
+name = "aleexzxzxzx-readme"
+main = "src/worker.ts"
+compatibility_date = "2023-11-21"
+
+# Keeps the <name>.<subdomain>.workers.dev URL alive as a test/fallback target.
+# Must be explicit: once `routes` is set, wrangler no longer enables it by default.
+workers_dev = true
+
+# Provisions the DNS record + Worker binding on `wrangler deploy`.
+# Requires the aleexrgzz.dev zone to live in the same Cloudflare account as the Worker.
+routes = [
+  { pattern = "readme.aleexrgzz.dev", custom_domain = true }
+]
