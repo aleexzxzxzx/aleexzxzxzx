@@ -15,5 +15,5 @@
 </picture>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://readme.aleexrgzz.dev?section=main&theme=dark">
-  <img src="https://readme.aleexrgzz.dev?section=main&theme=light" alt="I'm Alejandro. A developer building things for the web, one commit at a time." width="100%" height="290" align="left">
+  <img src="https://readme.aleexrgzz.dev?section=main&theme=light" alt="I'm Alejandro. A developer building things for the web." width="100%" height="290" align="left">
 </picture>

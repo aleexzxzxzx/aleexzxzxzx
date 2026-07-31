@@ -2,7 +2,7 @@ import type { Year } from './worker';
 
 const BP_MEDIUM = 550;
 const BP_LARGE = 700;
-const BODY_COPY = `I'm Alejandro. A developer building things for the web, one commit at a time.`;
+const BODY_COPY = `I'm Alejandro. A developer building things for the web.`;
 
 interface Props {
   width?: number;
@@ -200,6 +200,13 @@ export type Main = {
 };
 
 export const main = (props: Props & Main) => {
+  // Seamless marquee. The year strip is rendered twice and scrolled by exactly one
+  // set width plus the flex gap that separates the two copies, so the instant the
+  // animation restarts it lands on pixel-identical content and the loop is invisible.
+  // Without this the upstream animation ran once and froze at the far end forever.
+  const STRIDE = props.length + props.year.gap;
+  const TRACK = props.length * 2 + props.year.gap;
+
   const styles = /*css*/ `
 		${shared}
 
@@ -257,7 +264,7 @@ export const main = (props: Props & Main) => {
 			gap: calc(var(--size-year-gap) * 1px);
 
 			contain: strict;
-			inline-size: calc(var(--_w) * 1px);
+			inline-size: ${TRACK}px;
 			block-size: calc(var(--_h) * 1px);
 			will-change: transform;
 			backface-visibility: hidden;
@@ -266,6 +273,7 @@ export const main = (props: Props & Main) => {
 			animation-name: scroll, fade-in;
 			animation-timing-function: linear, ease-out;
 			animation-duration: calc(30s + (var(--_w) * 0.06s)), 2.5s;
+			animation-iteration-count: infinite, 1;
 			animation-fill-mode: both, both;
 			animation-delay: 2s, var(--animate-in-graph-delay);
 		}
@@ -274,7 +282,7 @@ export const main = (props: Props & Main) => {
 				transform: translateX(60px);
 			}
 			100% {
-				transform: translateX(calc(-100% + 100cqw));
+				transform: translateX(${60 - STRIDE}px);
 			}
 		}
 
@@ -339,6 +347,17 @@ export const main = (props: Props & Main) => {
   const days = (days: Year['days']) =>
     days.map((level) => `<div class="dot dot--${level}"></div>`).join('');
 
+  const strip = props.years
+    .map(
+      (year, i) => /* html */ `
+					<div class="year year--${i}" style="--w: ${props.sizes[i][0]}; --h: ${props.sizes[i][1]};">
+						<div class="year__days">${days(year.days)}</div>
+						<div class="year__label label"><span>${date(i)}</span></div>
+					</div>
+				`
+    )
+    .join('');
+
   const html = /* html */ `
 		<main class="wrapper grid">
 			<article class="intro">
@@ -348,16 +367,7 @@ export const main = (props: Props & Main) => {
 			</article>
 			<article class="graph">
 				<div class="years" style="--w: ${props.length}; --h: ${props.sizes[0][1]};">
-					${props.years
-            .map(
-              (year, i) => /* html */ `
-						<div class="year year--${i}" style="--w: ${props.sizes[i][0]}; --h: ${props.sizes[i][1]};">
-							<div class="year__days">${days(year.days)}</div>
-							<div class="year__label label"><span>${date(i)}</span></div>
-						</div>
-					`
-            )
-            .join('')}
+					${strip}${strip}
 				</div>
 			</article>
 		</main>
