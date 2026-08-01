@@ -211,15 +211,25 @@ export const main = (props: Props & Main) => {
   // the scroll keyframes, which meant the loop reopened the gap every cycle; it now
   // sits on a parent element so it plays exactly once.
   //
-  // The two animations are chained rather than overlapped. Both translate along the
-  // same axis, so running them together would sum their velocities and the graph
-  // would travel at double speed until the inset closed. Instead the inset consumes
-  // its 60px at the scroll's own rate, and the scroll starts as it finishes, which
-  // reproduces upstream's constant-velocity motion.
+  // Intro sequence: hold at the inset, ease into place, rest, then scroll forever.
+  // The rest is what keeps the newest column and its date label readable on arrival —
+  // without it the scroll starts the instant the strip lands and clips the label
+  // within a couple of seconds.
+  //
+  // The entry eases in and out so it both departs and arrives at zero velocity, which
+  // is why the pause that follows does not read as a stall. The scroll itself stays
+  // linear: easing an infinite animation would leave its end velocity different from
+  // its start, and the loop seam would show. It resumes from rest at ~15px/s, slow
+  // enough that the step is invisible.
+  //
+  // The phases must not overlap — both elements translate on the same axis, so
+  // concurrent phases would sum their velocities. animation-delay applies only to the
+  // first iteration, so this intro plays once and never interrupts the loop.
   const INSET = 60;
-  const SCROLL_SECONDS = 30 + props.length * 0.06;
-  const ENTER_SECONDS = Number(((INSET * SCROLL_SECONDS) / STRIDE).toFixed(3));
-  const SCROLL_DELAY = Number((2 + ENTER_SECONDS).toFixed(3));
+  const HOLD_SECONDS = 2;
+  const ENTER_SECONDS = 4;
+  const SETTLE_SECONDS = 10;
+  const SCROLL_DELAY = HOLD_SECONDS + ENTER_SECONDS + SETTLE_SECONDS;
 
   const styles = /*css*/ `
 		${shared}
@@ -272,11 +282,11 @@ export const main = (props: Props & Main) => {
 
 		.enter {
 			animation-name: enter;
-			animation-timing-function: linear;
+			animation-timing-function: ease-in-out;
 			animation-duration: ${ENTER_SECONDS}s;
 			animation-iteration-count: 1;
 			animation-fill-mode: both;
-			animation-delay: 2s;
+			animation-delay: ${HOLD_SECONDS}s;
 		}
 		@keyframes enter {
 			0% {
