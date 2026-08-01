@@ -277,12 +277,16 @@ export const main = (props: Props & Main) => {
 			animation-fill-mode: both, both;
 			animation-delay: 2s, var(--animate-in-graph-delay);
 		}
+		/* Starts at 0, not at an inset. Upstream began at translateX(60px) as a visual
+		   entry position, which was fine for a single pass but leaves the leftmost 60px
+		   empty at 0% while the same band holds real content at 100% — so every restart
+		   blanked that strip for a few seconds. A loop has no entry, so the inset goes. */
 		@keyframes scroll {
 			0% {
-				transform: translateX(60px);
+				transform: translateX(0);
 			}
 			100% {
-				transform: translateX(${60 - STRIDE}px);
+				transform: translateX(-${STRIDE}px);
 			}
 		}
 
