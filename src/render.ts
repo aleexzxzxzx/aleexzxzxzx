@@ -224,11 +224,16 @@ export const main = (props: Props & Main) => {
   // the approach was already travelling. Velocity runs 7.4px/s, ramps to 15.1px/s, holds
   // there. Legibility comes from the approach being slow, not from anything pausing.
   //
-  // The three speeds are pinned to each other through the ramp's bezier, whose slope is
-  // y1/x1 where it starts and (1-y2)/(1-x2) where it ends. Sizing the ramp as
-  // cruise * seconds / out-slope lands it on cruise exactly, and running the approach at
-  // cruise * in-slope / out-slope means the ramp inherits the speed it already had. Every
-  // junction is then continuous, and retuning any one number keeps the others honest.
+  // The timings below are the inputs and the bezier is solved from them, rather than the
+  // other way round: say when the strip should reach full speed and how long the ramp
+  // should take, and the curve that joins those speeds without a step falls out.
+  //
+  // A bezier's slope is y1/x1 where it starts and (1-y2)/(1-x2) where it ends. Placing
+  // both control points at the same x and solving y = r*x / (1 - x + r*x) yields a curve
+  // whose entry slope over its exit slope is exactly r. Feed it the ratio of approach
+  // speed to cruise speed and the ramp inherits the speed the approach was already
+  // travelling, then hands the scroll its own. Both junctions are continuous by
+  // construction, so retuning any one number keeps the others honest.
   //
   // The scroll stays linear. Easing an infinite animation would leave its end velocity
   // different from its start, and the loop seam would surface.
@@ -238,16 +243,21 @@ export const main = (props: Props & Main) => {
   // iteration, so this intro plays once and never interrupts the loop.
   const INSET = 60;
   const HOLD_SECONDS = 2;
-  const CRUISE = STRIDE / (30 + props.length * 0.06);
-
-  const RAMP_BEZIER = [0.5, 0.33, 0.5, 0.33] as const;
-  const RAMP_IN_SLOPE = RAMP_BEZIER[1] / RAMP_BEZIER[0];
-  const RAMP_OUT_SLOPE = (1 - RAMP_BEZIER[3]) / (1 - RAMP_BEZIER[2]);
-
+  const CRUISE_AT_SECONDS = 12;
   const RAMP_SECONDS = 4;
+
+  const CRUISE = STRIDE / (30 + props.length * 0.06);
+  const APPROACH_SECONDS = CRUISE_AT_SECONDS - HOLD_SECONDS - RAMP_SECONDS;
+  const APPROACH_SPEED = INSET / APPROACH_SECONDS;
+
+  const BEZIER_X = 0.6;
+  const SPEED_RATIO = APPROACH_SPEED / CRUISE;
+  const BEZIER_Y = (SPEED_RATIO * BEZIER_X) / (1 - BEZIER_X + SPEED_RATIO * BEZIER_X);
+  const RAMP_OUT_SLOPE = (1 - BEZIER_Y) / (1 - BEZIER_X);
   const RAMP_PX = Number(((CRUISE * RAMP_SECONDS) / RAMP_OUT_SLOPE).toFixed(3));
-  const APPROACH_SPEED = (CRUISE * RAMP_IN_SLOPE) / RAMP_OUT_SLOPE;
-  const APPROACH_SECONDS = Number((INSET / APPROACH_SPEED).toFixed(3));
+  const RAMP_BEZIER = [BEZIER_X, BEZIER_Y, BEZIER_X, BEZIER_Y]
+    .map((n) => Number(n.toFixed(4)))
+    .join(', ');
 
   const INTRO_SECONDS = Number((APPROACH_SECONDS + RAMP_SECONDS).toFixed(3));
   const LANDING_PCT = Number(((APPROACH_SECONDS / INTRO_SECONDS) * 100).toFixed(2));
@@ -317,7 +327,7 @@ export const main = (props: Props & Main) => {
 			}
 			${LANDING_PCT}% {
 				transform: translateX(0);
-				animation-timing-function: cubic-bezier(${RAMP_BEZIER.join(', ')});
+				animation-timing-function: cubic-bezier(${RAMP_BEZIER});
 			}
 			100% {
 				transform: translateX(-${RAMP_PX}px);
