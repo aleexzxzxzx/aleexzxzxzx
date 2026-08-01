@@ -211,25 +211,33 @@ export const main = (props: Props & Main) => {
   // the scroll keyframes, which meant the loop reopened the gap every cycle; it now
   // sits on a parent element so it plays exactly once.
   //
-  // Intro sequence: hold at the inset, ease into place, rest, then scroll forever.
-  // The rest is what keeps the newest column and its date label readable on arrival —
-  // without it the scroll starts the instant the strip lands and clips the label
-  // within a couple of seconds.
+  // Intro sequence: hold at the inset, ease into place, pull away slowly, then scroll
+  // forever. It never comes to rest. An earlier version parked the strip at the landing
+  // point for ten seconds to keep the newest column's date label readable, but a hold
+  // that long reads as a stall rather than a beat — the graph looks stuck, not poised.
   //
-  // The entry eases in and out so it both departs and arrives at zero velocity, which
-  // is why the pause that follows does not read as a stall. The scroll itself stays
-  // linear: easing an infinite animation would leave its end velocity different from
-  // its start, and the loop seam would show. It resumes from rest at ~15px/s, slow
-  // enough that the step is invisible.
+  // The pull-away replaces it: the same readable window, bought with motion slow enough
+  // to preserve it instead of with a freeze. It accelerates out of the landing point and
+  // reaches cruising speed exactly as the scroll takes over, so the handover disappears.
+  // Deriving its duration from the cruise rate is what makes those velocities line up —
+  // cubic-bezier(0.6, 0, 0.5, 0.25) leaves at zero and arrives at 1.5x its own average,
+  // so running it for 1.5 * distance / cruise ends it at precisely cruise speed.
   //
-  // The phases must not overlap — both elements translate on the same axis, so
-  // concurrent phases would sum their velocities. animation-delay applies only to the
-  // first iteration, so this intro plays once and never interrupts the loop.
+  // The scroll stays linear. Easing an infinite animation would leave its end velocity
+  // different from its start, and the loop seam would surface.
+  //
+  // Phases must not overlap — both elements translate on the same axis, so concurrent
+  // phases would sum their velocities. animation-delay applies only to the first
+  // iteration, so this intro plays once and never interrupts the loop.
   const INSET = 60;
   const HOLD_SECONDS = 2;
   const ENTER_SECONDS = 4;
-  const SETTLE_SECONDS = 10;
-  const SCROLL_DELAY = HOLD_SECONDS + ENTER_SECONDS + SETTLE_SECONDS;
+  const CRUISE = STRIDE / (30 + props.length * 0.06);
+  const PULL_PX = 60;
+  const PULL_SECONDS = Number(((1.5 * PULL_PX) / CRUISE).toFixed(3));
+  const INTRO_SECONDS = Number((ENTER_SECONDS + PULL_SECONDS).toFixed(3));
+  const LANDING_PCT = Number(((ENTER_SECONDS / INTRO_SECONDS) * 100).toFixed(2));
+  const SCROLL_DELAY = Number((HOLD_SECONDS + INTRO_SECONDS).toFixed(3));
 
   const styles = /*css*/ `
 		${shared}
@@ -282,18 +290,23 @@ export const main = (props: Props & Main) => {
 
 		.enter {
 			animation-name: enter;
-			animation-timing-function: ease-in-out;
-			animation-duration: ${ENTER_SECONDS}s;
+			animation-duration: ${INTRO_SECONDS}s;
 			animation-iteration-count: 1;
 			animation-fill-mode: both;
 			animation-delay: ${HOLD_SECONDS}s;
 		}
+		/* Per-segment easing: settle into the landing point, then accelerate out of it. */
 		@keyframes enter {
 			0% {
 				transform: translateX(${INSET}px);
+				animation-timing-function: ease-in-out;
+			}
+			${LANDING_PCT}% {
+				transform: translateX(0);
+				animation-timing-function: cubic-bezier(0.6, 0, 0.5, 0.25);
 			}
 			100% {
-				transform: translateX(0);
+				transform: translateX(-${PULL_PX}px);
 			}
 		}
 
