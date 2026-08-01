@@ -211,17 +211,24 @@ export const main = (props: Props & Main) => {
   // the scroll keyframes, which meant the loop reopened the gap every cycle; it now
   // sits on a parent element so it plays exactly once.
   //
-  // Intro sequence: hold at the inset, ease into place, pull away slowly, then scroll
-  // forever. It never comes to rest. An earlier version parked the strip at the landing
-  // point for ten seconds to keep the newest column's date label readable, but a hold
-  // that long reads as a stall rather than a beat — the graph looks stuck, not poised.
+  // Intro: approach at a steady crawl, then ramp up to cruising speed. Nothing in it
+  // ever reaches zero velocity, which is the whole point.
   //
-  // The pull-away replaces it: the same readable window, bought with motion slow enough
-  // to preserve it instead of with a freeze. It accelerates out of the landing point and
-  // reaches cruising speed exactly as the scroll takes over, so the handover disappears.
-  // Deriving its duration from the cruise rate is what makes those velocities line up —
-  // cubic-bezier(0.6, 0, 0.5, 0.25) leaves at zero and arrives at 1.5x its own average,
-  // so running it for 1.5 * distance / cruise ends it at precisely cruise speed.
+  // Two earlier attempts to keep the newest column's date label readable on arrival both
+  // failed the same way. Parking the strip for ten seconds was an obvious stall. Easing
+  // out of the landing point looked identical: an ease-in-out approach finishes at zero
+  // velocity and an ease-in ramp departs from it, so the strip crawled a pixel or two per
+  // second either side of the landing — arithmetically moving, visually stopped.
+  //
+  // So the approach is linear rather than eased, and the ramp starts at exactly the speed
+  // the approach was already travelling. Velocity runs 7.4px/s, ramps to 15.1px/s, holds
+  // there. Legibility comes from the approach being slow, not from anything pausing.
+  //
+  // The three speeds are pinned to each other through the ramp's bezier, whose slope is
+  // y1/x1 where it starts and (1-y2)/(1-x2) where it ends. Sizing the ramp as
+  // cruise * seconds / out-slope lands it on cruise exactly, and running the approach at
+  // cruise * in-slope / out-slope means the ramp inherits the speed it already had. Every
+  // junction is then continuous, and retuning any one number keeps the others honest.
   //
   // The scroll stays linear. Easing an infinite animation would leave its end velocity
   // different from its start, and the loop seam would surface.
@@ -231,12 +238,19 @@ export const main = (props: Props & Main) => {
   // iteration, so this intro plays once and never interrupts the loop.
   const INSET = 60;
   const HOLD_SECONDS = 2;
-  const ENTER_SECONDS = 4;
   const CRUISE = STRIDE / (30 + props.length * 0.06);
-  const PULL_PX = 60;
-  const PULL_SECONDS = Number(((1.5 * PULL_PX) / CRUISE).toFixed(3));
-  const INTRO_SECONDS = Number((ENTER_SECONDS + PULL_SECONDS).toFixed(3));
-  const LANDING_PCT = Number(((ENTER_SECONDS / INTRO_SECONDS) * 100).toFixed(2));
+
+  const RAMP_BEZIER = [0.5, 0.33, 0.5, 0.33] as const;
+  const RAMP_IN_SLOPE = RAMP_BEZIER[1] / RAMP_BEZIER[0];
+  const RAMP_OUT_SLOPE = (1 - RAMP_BEZIER[3]) / (1 - RAMP_BEZIER[2]);
+
+  const RAMP_SECONDS = 4;
+  const RAMP_PX = Number(((CRUISE * RAMP_SECONDS) / RAMP_OUT_SLOPE).toFixed(3));
+  const APPROACH_SPEED = (CRUISE * RAMP_IN_SLOPE) / RAMP_OUT_SLOPE;
+  const APPROACH_SECONDS = Number((INSET / APPROACH_SPEED).toFixed(3));
+
+  const INTRO_SECONDS = Number((APPROACH_SECONDS + RAMP_SECONDS).toFixed(3));
+  const LANDING_PCT = Number(((APPROACH_SECONDS / INTRO_SECONDS) * 100).toFixed(2));
   const SCROLL_DELAY = Number((HOLD_SECONDS + INTRO_SECONDS).toFixed(3));
 
   const styles = /*css*/ `
@@ -295,18 +309,18 @@ export const main = (props: Props & Main) => {
 			animation-fill-mode: both;
 			animation-delay: ${HOLD_SECONDS}s;
 		}
-		/* Per-segment easing: settle into the landing point, then accelerate out of it. */
+		/* Per-segment easing: a linear approach, then a ramp onto cruising speed. */
 		@keyframes enter {
 			0% {
 				transform: translateX(${INSET}px);
-				animation-timing-function: ease-in-out;
+				animation-timing-function: linear;
 			}
 			${LANDING_PCT}% {
 				transform: translateX(0);
-				animation-timing-function: cubic-bezier(0.6, 0, 0.5, 0.25);
+				animation-timing-function: cubic-bezier(${RAMP_BEZIER.join(', ')});
 			}
 			100% {
-				transform: translateX(-${PULL_PX}px);
+				transform: translateX(-${RAMP_PX}px);
 			}
 		}
 
