@@ -207,6 +207,20 @@ export const main = (props: Props & Main) => {
   const STRIDE = props.length + props.year.gap;
   const TRACK = props.length * 2 + props.year.gap;
 
+  // The strip enters from a small inset, as upstream did. That inset used to live in
+  // the scroll keyframes, which meant the loop reopened the gap every cycle; it now
+  // sits on a parent element so it plays exactly once.
+  //
+  // The two animations are chained rather than overlapped. Both translate along the
+  // same axis, so running them together would sum their velocities and the graph
+  // would travel at double speed until the inset closed. Instead the inset consumes
+  // its 60px at the scroll's own rate, and the scroll starts as it finishes, which
+  // reproduces upstream's constant-velocity motion.
+  const INSET = 60;
+  const SCROLL_SECONDS = 30 + props.length * 0.06;
+  const ENTER_SECONDS = Number(((INSET * SCROLL_SECONDS) / STRIDE).toFixed(3));
+  const SCROLL_DELAY = Number((2 + ENTER_SECONDS).toFixed(3));
+
   const styles = /*css*/ `
 		${shared}
 
@@ -256,6 +270,23 @@ export const main = (props: Props & Main) => {
 			grid-area: 2 / 1 / span 1 / span 6;
 		}
 
+		.enter {
+			animation-name: enter;
+			animation-timing-function: linear;
+			animation-duration: ${ENTER_SECONDS}s;
+			animation-iteration-count: 1;
+			animation-fill-mode: both;
+			animation-delay: 2s;
+		}
+		@keyframes enter {
+			0% {
+				transform: translateX(${INSET}px);
+			}
+			100% {
+				transform: translateX(0);
+			}
+		}
+
 		.years {
 			--_w: var(--w);
 			--_h: calc(var(--h) + var(--size-label-height));
@@ -275,12 +306,10 @@ export const main = (props: Props & Main) => {
 			animation-duration: calc(30s + (var(--_w) * 0.06s)), 2.5s;
 			animation-iteration-count: infinite, 1;
 			animation-fill-mode: both, both;
-			animation-delay: 2s, var(--animate-in-graph-delay);
+			animation-delay: ${SCROLL_DELAY}s, var(--animate-in-graph-delay);
 		}
-		/* Starts at 0, not at an inset. Upstream began at translateX(60px) as a visual
-		   entry position, which was fine for a single pass but leaves the leftmost 60px
-		   empty at 0% while the same band holds real content at 100% — so every restart
-		   blanked that strip for a few seconds. A loop has no entry, so the inset goes. */
+		/* Runs 0 to -stride, with no inset of its own: the entry above owns that, so a
+		   restart lands on pixel-identical content instead of reopening the gap. */
 		@keyframes scroll {
 			0% {
 				transform: translateX(0);
@@ -370,8 +399,10 @@ export const main = (props: Props & Main) => {
           .join('')}</p>
 			</article>
 			<article class="graph">
-				<div class="years" style="--w: ${props.length}; --h: ${props.sizes[0][1]};">
-					${strip}${strip}
+				<div class="enter">
+					<div class="years" style="--w: ${props.length}; --h: ${props.sizes[0][1]};">
+						${strip}${strip}
+					</div>
 				</div>
 			</article>
 		</main>
