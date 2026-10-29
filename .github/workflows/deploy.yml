@@ -4,10 +4,19 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'wrangler.toml'
+      - '.github/workflows/deploy.yml'
+
+  workflow_dispatch:
 
   schedule:
-    # Schedule to run at 00:00 and 12:00 every day
-    - cron: '0 0,12 * * *'
+    # Refresh hourly, away from the busy start of the hour.
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
@@ -36,12 +45,15 @@ jobs:
           cache: 'pnpm'
 
       - name: Install Dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Fetch Stats
         run: pnpm stats
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+
+      - name: Validate and build SVG assets
+        run: pnpm types && pnpm lint && pnpm test && pnpm build
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v3.7.0

@@ -414,7 +414,8 @@ export const main = (props: Props & Main) => {
     date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     });
 
   // getUTCFullYear, not getFullYear: `from` is a UTC timestamp, and reading it in a
@@ -422,7 +423,7 @@ export const main = (props: Props & Main) => {
   // dev west of UTC labels the 2025 column "2024"). CI and Workers both run UTC, so
   // this only ever bit local dev — but UTC is the correct read in every case.
   const date = (i: number) =>
-    i == 0 ? format(new Date()) : new Date(props.years[i].from).getUTCFullYear();
+    i == 0 ? format(new Date(props.years[i].to)) : new Date(props.years[i].from).getUTCFullYear();
 
   const days = (days: Year['days']) =>
     days.map((level) => `<div class="dot dot--${level}"></div>`).join('');

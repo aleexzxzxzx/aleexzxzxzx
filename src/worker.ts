@@ -9,8 +9,8 @@ export type Year = {
 
 const MAX_YEARS = 3;
 
-const worker: ExportedHandler = {
-  async fetch(request, env, ctx) {
+const worker = {
+  async fetch(request: Request) {
     const { searchParams } = new URL(request.url);
     const theme = (searchParams.get('theme') ?? 'light') as 'light' | 'dark';
     const section = searchParams.get('section') ?? '';
@@ -63,12 +63,10 @@ const worker: ExportedHandler = {
     return new Response(content, {
       headers: {
         'content-type': 'image/svg+xml',
-        'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        pragma: 'no-cache',
-        expires: '0'
+        'cache-control': 'public, max-age=300, must-revalidate'
       }
     });
   }
-};
+} satisfies ExportedHandler;
 
 export default worker;

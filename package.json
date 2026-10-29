@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "wrangler dev",
-    "deploy": "pnpm stats && wrangler deploy",
+    "start": "pnpm build && wrangler dev",
+    "deploy": "pnpm stats && pnpm build && wrangler deploy",
+    "build": "tsm scripts/build.ts",
+    "test": "tsm scripts/test.ts",
     "format": "prettier --write ./{src,scripts}/*",
     "stats": "tsm scripts/stats.ts",
     "stats:local": "tsm --env-file .env scripts/stats.ts",
@@ -18,6 +20,6 @@
     "prettier": "^3.3.2",
     "tsm": "^2.3.0",
     "typescript": "^5.5.3",
-    "wrangler": "^3.63.0"
+    "wrangler": "^3.100.0"
   }
 }

@@ -1,4 +1,5 @@
 import { writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 import type { Year } from '../src/worker';
 
 export const START_DATE = new Date('2022-12-11T00:00:00.000Z');
@@ -58,7 +59,8 @@ export async function request(date: { from?: Date; to?: Date }) {
       to: date.to?.toISOString()
     }
   };
-  const response = await fetch('https://api.github.com/graphql', {
+  if (!process.env.API_TOKEN_GITHUB) throw new Error('API_TOKEN_GITHUB is required');
+  const result = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -66,8 +68,10 @@ export async function request(date: { from?: Date; to?: Date }) {
       Authorization: `bearer ${process.env.API_TOKEN_GITHUB}`
     },
     body: JSON.stringify(body)
-  }).then((res) => res.json() as Promise<Response>);
-  if (!response?.data?.user) {
+  });
+  if (!result.ok) throw new Error(`GitHub GraphQL HTTP ${result.status}`);
+  const response = (await result.json()) as Response & { errors?: unknown[] };
+  if (response.errors?.length || !response?.data?.user) {
     throw new Error(`GitHub GraphQL returned no user data: ${JSON.stringify(response)}`);
   }
   const calender = response.data.user.contributionsCollection.contributionCalendar;
@@ -100,32 +104,33 @@ const levelToInt = (level: Contribution['contributionLevel']) => {
  * Limited to fetching 1-year intervals per GitHub's current restrictions.
  * Sorts contributions in reverse chronological order, showing most recent commits first.
  */
-async function getAllContributions(start: Date, end = new Date()) {
+export async function getAllContributions(start: Date, end = new Date()) {
   const years: Year[] = [];
   let cursor = start;
   let contributions = 0;
 
   while (cursor < end) {
-    let next = new Date(cursor.getFullYear() + 1, 0, 1);
+    let next = new Date(Date.UTC(cursor.getUTCFullYear() + 1, 0, 1));
     // prevent fetching data beyond the current date
     if (next > end) next = end;
     console.info('...Fetching from', cursor.toISOString(), next.toISOString());
-    const data = await request({ to: next, from: cursor });
+    const to = next < end ? new Date(next.getTime() - 1) : next;
+    const data = await request({ to, from: cursor });
     contributions += data.contributions;
     years.push({
       from: cursor.toISOString(),
-      to: next.toISOString(),
+      to: to.toISOString(),
       days: data.weeks
         .flatMap((week) => week.contributionDays.map((day) => levelToInt(day.contributionLevel)))
         .reverse()
     });
     cursor = next;
   }
-  return [years.reverse(), contributions];
+  return { years: years.reverse(), contributions };
 }
 
-const [years, contributions] = await getAllContributions(START_DATE);
-
-await writeFile('src/stats.json', JSON.stringify({ years, contributions }));
-
-console.log('...Done');
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const stats = await getAllContributions(START_DATE);
+  await writeFile('src/stats.json', JSON.stringify(stats));
+  console.log('...Done');
+}
